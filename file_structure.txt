@@ -17,5 +17,6 @@ COMPILER-CPS2000/
 ├── docs/
 │   ├── report.md        # Task 7: Draft for Implementation Report
 │   └── egraphs_paper.pdf # Task 6: The separate 2-page paper
+|-- Task 1: Lexer/         # Guides for Task 1: Lexer
 ├── Cargo.toml           # Rust dependencies
 └── README.md            # Quick start instructions
