@@ -1,0 +1,23 @@
+// Task 1 test: abs_diff from the project specification
+function Math::abs_diff(%a: i32, %b: i32) -> i32 {
+  locals {
+    %zero   : i32;
+    %d      : i32;
+    %is_neg : bool;
+    %r      : i32;
+  }
+  entry bb0;
+
+  bb0:
+    %zero   = const 0;
+    %d      = bin sub %a, %b;
+    %is_neg = bin lt %d, %zero;
+    cjump %is_neg, bb1, bb2;
+
+  bb1:
+    %r = un neg %d;
+    return %r;
+
+  bb2:
+    return %d;
+}

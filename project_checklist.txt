@@ -1,5 +1,5 @@
 Phase 1: The Foundation (Tasks 1 & 2)
-    [ ] Task 1: Lexer. Create a state-transition table for the ResIR micro-syntax. 
+    [X] Task 1: Lexer. Create a state-transition table for the ResIR micro-syntax. 
         Focus on identifying keywords like function, locals, and cjump, as 
         well as locals starting with %.
 

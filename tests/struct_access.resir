@@ -1,0 +1,18 @@
+// Task 1 test: struct member access from the project specification
+extern type Custom::Struct::Point {
+  x : i32;
+  y : i32;
+}
+
+function Geom::point_x(%p: ptr<Custom::Struct::Point>) -> i32 {
+  locals {
+    %fp : ptr<i32>;
+    %v  : i32;
+  }
+  entry bb0;
+
+  bb0:
+    %fp = member_ptr %p, x;
+    %v  = load %fp;
+    return %v;
+}
