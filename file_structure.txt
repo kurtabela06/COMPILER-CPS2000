@@ -1,0 +1,21 @@
+COMPILER-CPS2000/
+├── src/
+│   ├── main.rs          # Entry point: Orchestrates tasks 1-5
+│   ├── lexer.rs         # Task 1: Table-driven lexer
+│   ├── parser.rs        # Task 2: Hand-written top-down parser
+│   ├── ast.rs           # Internal representation (CFG/AST)
+│   ├── sema.rs          # Task 3: Validation and type checking
+│   ├── codegen.rs       # Task 4: C code generation
+│   └── analysis.rs      # Task 5: Rust-to-Datalog integration
+├── datalog/
+│   ├── analysis.dl      # Task 5: Datalog rules (e.g., Live Variables)
+│   └── facts/           # Directory where Rust will export .facts files
+├── tests/               # Your test suite [cite: 5]
+│   ├── basic_math.resir
+│   ├── struct_access.resir
+│   └── expected_output/ # Validated .c files for comparison
+├── docs/
+│   ├── report.md        # Task 7: Draft for Implementation Report
+│   └── egraphs_paper.pdf # Task 6: The separate 2-page paper
+├── Cargo.toml           # Rust dependencies
+└── README.md            # Quick start instructions

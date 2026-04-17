@@ -1,0 +1,37 @@
+Phase 1: The Foundation (Tasks 1 & 2)
+    [ ] Task 1: Lexer. Create a state-transition table for the ResIR micro-syntax. 
+        Focus on identifying keywords like function, locals, and cjump, as 
+        well as locals starting with %.
+
+    [ ] Task 2: Parser. Implement a recursive-descent (top-down) parser.
+        [ ] Ensure it builds a Control Flow Graph (CFG) where each Block 
+            contains Statements and exactly one Terminator.
+        [ ] Use the predictive nature of the grammar (one-token lookahead) to
+            simplify the logic.
+    
+Phase 2: Meaning & Output (Tasks 3 & 4)
+    [ ] Task 3: Semantic Pass. Validate the "well-behaved" IR.
+        [ ] Check that every jump and cjump points to a label that actually exists.
+        [ ] Verify that return types match the function signature.
+        [ ] Implement the member_ptr check: the base must be a ptr<P> and the field 
+            must exist in the extern type declaration.
+        
+    [ ] Task 4: C Generation. Translate ResIR to C.
+        [ ] Map i32 to int32_t, f64 to double, and bool to bool (via <stdbool.h>).
+        [ ] Use the suggested "label and goto" strategy for blocks to keep it simple.
+    
+Phase 3: Advanced Analysis (Task 5)
+    [ ] Task 5: Datalog. Choose an analysis like "Live Variable Analysis".
+        [ ] Write Rust code to traverse your CFG and export "facts" (e.g., edge(bb0, bb1))
+            into text files.
+        [ ] Write a Soufflé .dl file with rules to compute which variables are "live".
+        [ ] (Bonus) Use the results to warn the user about dead code.
+        
+Phase 4: Research & Documentation (Task 6 & Final)
+    [ ] Task 6: E-Graphs Paper. Write the separate 2-3 page paper.
+        [ ] Research the egg library and equality saturation.
+        [ ] Explain how e-graphs could have optimized the ResIR math expressions better 
+            than your Task 5 analysis.
+        [ ] Final Report & Video.
+        [ ] Compile your findings, including Datalog rules and test results.
+        [ ] Record a 5-minute (max) 720p demo of your compiler in action.
