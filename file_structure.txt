@@ -1,22 +1,49 @@
 COMPILER-CPS2000/
-├── src/
-│   ├── main.rs          # Entry point: Orchestrates tasks 1-5
-│   ├── lexer.rs         # Task 1: Table-driven lexer
-│   ├── parser.rs        # Task 2: Hand-written top-down parser
-│   ├── ast.rs           # Internal representation (CFG/AST)
-│   ├── sema.rs          # Task 3: Validation and type checking
-│   ├── codegen.rs       # Task 4: C code generation
-│   └── analysis.rs      # Task 5: Rust-to-Datalog integration
-├── datalog/
-│   ├── analysis.dl      # Task 5: Datalog rules (e.g., Live Variables)
-│   └── facts/           # Directory where Rust will export .facts files
-├── tests/               # Your test suite [cite: 5]
-│   ├── basic_math.resir
-│   ├── struct_access.resir
-│   └── expected_output/ # Validated .c files for comparison
+├── include/                        # Public header files (shared by all tasks)
+│   ├── token.hpp                   # Task 1: TokenKind enum + Token struct
+│   ├── lexer.hpp                   # Task 1: Lexer class declaration
+│   ├── ast.hpp                     # Task 2: AST/CFG node types (to be created)
+│   ├── parser.hpp                  # Task 2: Parser class declaration (to be created)
+│   ├── sema.hpp                    # Task 3: Semantic/type-checker declaration (to be created)
+│   └── codegen.hpp                 # Task 4: C code generator declaration (to be created)
+│
+├── src/                            # Implementation files
+│   ├── main.cpp                    # Entry point: orchestrates Tasks 1-5
+│   ├── token.cpp                   # Task 1: token_kind_name() helper
+│   ├── lexer.cpp                   # Task 1: Table-driven lexer (DFA + transition table)
+│   ├── test_lexer.cpp              # Task 1: 23 unit tests for the lexer
+│   ├── parser.cpp                  # Task 2: Hand-written top-down parser (to be created)
+│   ├── ast.cpp                     # Task 2: AST/CFG node constructors (to be created)
+│   ├── sema.cpp                    # Task 3: Validation and type checking (to be created)
+│   └── codegen.cpp                 # Task 4: C code emission (to be created)
+│
+├── datalog/                        # Task 5: Soufflé Datalog analysis
+│   ├── analysis.dl                 # Datalog rules (live-variable / reaching-defs)
+│   └── facts/                      # Generated .facts files exported from the parser
+│       ├── edge.facts              # CFG edges: edge(bb0, bb1)
+│       ├── def.facts               # Definitions: def(stmt_id, %local)
+│       └── use.facts               # Uses: use(stmt_id, %local)
+│
+├── tests/                          # Test suite (.resir inputs + expected outputs)
+│   ├── basic_math.resir            # abs_diff example from the spec
+│   ├── struct_access.resir         # member_ptr / extern type example from the spec
+│   └── expected_output/            # Reference .c files for Task 4 regression tests
+│
 ├── docs/
-│   ├── report.md        # Task 7: Draft for Implementation Report
-│   └── egraphs_paper.pdf # Task 6: The separate 2-page paper
-|-- Task 1: Lexer/         # Guides for Task 1: Lexer
-├── Cargo.toml           # Rust dependencies
-└── README.md            # Quick start instructions
+│   ├── report.md                   # Implementation report draft
+│   └── egraphs_paper.pdf           # Task 6: Separate 2-page e-graphs paper
+│
+├── TASK1_GUIDE.md                  # Task 1 tutorial: compile, run, DFA diagram
+├── Makefile                        # `make` → build, `make test` → run tests
+├── file_structure.txt              # This file
+└── README.md                       # Quick-start instructions
+
+Language choices:
+  Tasks 1-4  →  C++17  (g++, no external libraries)
+  Task 5     →  Soufflé Datalog + C++17 (Soufflé interoperates well with C++)
+  Task 6     →  PDF paper (separate from this implementation)
+
+Build:
+  make          builds ./resir  (the main compiler binary)
+  make test     builds and runs ./resir_test  (unit tests)
+  make clean    removes built binaries
