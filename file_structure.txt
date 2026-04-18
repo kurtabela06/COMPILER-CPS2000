@@ -2,20 +2,18 @@ COMPILER-CPS2000/
 ├── include/                        # Public header files (shared by all tasks)
 │   ├── token.hpp                   # Task 1: TokenKind enum + Token struct
 │   ├── lexer.hpp                   # Task 1: Lexer class declaration
-│   ├── ast.hpp                     # Task 2: AST/CFG node types (to be created)
-│   ├── parser.hpp                  # Task 2: Parser class declaration (to be created)
-│   ├── sema.hpp                    # Task 3: Semantic/type-checker declaration (to be created)
-│   └── codegen.hpp                 # Task 4: C code generator declaration (to be created)
+│   ├── parser.hpp                  # Task 2: Parser class declaration
+│   ├── cfg.hpp                     # Task 2: CFG (Control Flow Graph) node types
+│   └── validator.hpp               # Task 3: Semantic/type-checker declaration
 │
 ├── src/                            # Implementation files
 │   ├── main.cpp                    # Entry point: orchestrates Tasks 1-5
-│   ├── token.cpp                   # Task 1: token_kind_name() helper
 │   ├── lexer.cpp                   # Task 1: Table-driven lexer (DFA + transition table)
-│   ├── test_lexer.cpp              # Task 1: 23 unit tests for the lexer
-│   ├── parser.cpp                  # Task 2: Hand-written top-down parser (to be created)
-│   ├── ast.cpp                     # Task 2: AST/CFG node constructors (to be created)
-│   ├── sema.cpp                    # Task 3: Validation and type checking (to be created)
-│   └── codegen.cpp                 # Task 4: C code emission (to be created)
+│   ├── parser.cpp                  # Task 2: Hand-written top-down parser
+│   ├── cfg.cpp                     # Task 2: CFG node implementations
+│   ├── validator.cpp               # Task 3: Validation and semantic checking
+│   ├── test_parser.cpp             # Task 2: Unit tests for the parser
+│   └── test_validator.cpp          # Task 3: Unit tests for the validator
 │
 ├── datalog/                        # Task 5: Soufflé Datalog analysis
 │   ├── analysis.dl                 # Datalog rules (live-variable / reaching-defs)
@@ -34,8 +32,11 @@ COMPILER-CPS2000/
 │   └── egraphs_paper.pdf           # Task 6: Separate 2-page e-graphs paper
 │
 ├── TASK1_GUIDE.md                  # Task 1 tutorial: compile, run, DFA diagram
+├── TASK2_GUIDE.md                  # Task 2 tutorial: parsing, AST construction
+├── TASK3_GUIDE.md                  # Task 3 tutorial: semantic validation
 ├── Makefile                        # `make` → build, `make test` → run tests
 ├── file_structure.txt              # This file
+├── project_checklist.txt           # Tracking checklist for all tasks
 └── README.md                       # Quick-start instructions
 
 Language choices:

@@ -3,10 +3,10 @@ Phase 1: The Foundation (Tasks 1 & 2)
         Focus on identifying keywords like function, locals, and cjump, as 
         well as locals starting with %.
 
-    [ ] Task 2: Parser. Implement a recursive-descent (top-down) parser.
-        [ ] Ensure it builds a Control Flow Graph (CFG) where each Block 
+    [X] Task 2: Parser. Implement a recursive-descent (top-down) parser.
+        [X] Ensure it builds a Control Flow Graph (CFG) where each Block 
             contains Statements and exactly one Terminator.
-        [ ] Use the predictive nature of the grammar (one-token lookahead) to
+        [X] Use the predictive nature of the grammar (one-token lookahead) to
             simplify the logic.
     
 Phase 2: Meaning & Output (Tasks 3 & 4)

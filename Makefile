@@ -1,62 +1,69 @@
 # =============================================================================
-# Makefile — Build the ResIR compiler (Tasks 1 + 2)
+# Makefile — Build the ResIR compiler (Tasks 1 + 2 + 3)
 # =============================================================================
 #
 # Usage:
-#   make                  — build the main compiler binary  (./resir)
-#   make test             — build and run ALL unit tests (lexer + parser)
-#   make test_lexer       — build and run only the lexer tests
-#   make test_parser      — build and run only the parser tests
-#   make run FILE=tests/basic_math.resir   — parse a .resir file and print CFG
-#   make tokens FILE=tests/basic_math.resir — print only the token stream
-#   make clean            — remove all built files
+#   make                      build ./resir
+#   make test                 run ALL unit tests (lexer + parser + validator)
+#   make test_lexer           run only lexer tests
+#   make test_parser          run only parser tests
+#   make test_validator       run only validator tests
+#   make run FILE=<f>         validate + print CFG for FILE
+#   make tokens FILE=<f>      print token stream only
+#   make parse FILE=<f>       parse + print CFG (skip validate)
+#   make clean                remove all built binaries
 #
-# Compiler flags:
-#   -std=c++17  enables C++17 features (std::make_unique, structured bindings…)
-#   -Wall       all standard warnings
-#   -Wextra     extra warnings
-#   -Iinclude   look for header files in the include/ directory
+# Flags:
+#   -std=c++17   C++17 features (make_unique, if-init, structured bindings…)
+#   -Wall        all standard warnings
+#   -Wextra      extra warnings
+#   -Iinclude    find headers in include/
 # =============================================================================
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
 
 # ---------------------------------------------------------------------------
-# Shared source files (used by both the main binary and the tests)
+# Source groups
 # ---------------------------------------------------------------------------
-SHARED_SRCS = src/lexer.cpp src/token.cpp src/parser.cpp src/cfg.cpp
+# SHARED: compiled into every binary that needs the full pipeline
+SHARED_SRCS = src/lexer.cpp src/token.cpp \
+              src/parser.cpp src/cfg.cpp \
+              src/validator.cpp
 
-# Main compiler binary sources
-MAIN_SRCS = src/main.cpp $(SHARED_SRCS)
-
-# Lexer-only test sources
-LEXER_TEST_SRCS = src/test_lexer.cpp src/lexer.cpp src/token.cpp
-
-# Parser test sources (needs the full pipeline)
-PARSER_TEST_SRCS = src/test_parser.cpp $(SHARED_SRCS)
-
-# Output binary names
-TARGET             = resir
-LEXER_TEST_TARGET  = resir_lexer_test
-PARSER_TEST_TARGET = resir_parser_test
+MAIN_SRCS           = src/main.cpp           $(SHARED_SRCS)
+LEXER_TEST_SRCS     = src/test_lexer.cpp     src/lexer.cpp src/token.cpp
+PARSER_TEST_SRCS    = src/test_parser.cpp    src/lexer.cpp src/token.cpp \
+                      src/parser.cpp src/cfg.cpp
+VALIDATOR_TEST_SRCS = src/test_validator.cpp $(SHARED_SRCS)
 
 # ---------------------------------------------------------------------------
-# Default target: build the main compiler
+# Binary names
+# ---------------------------------------------------------------------------
+TARGET              = resir
+LEXER_TEST_TARGET   = resir_lexer_test
+PARSER_TEST_TARGET  = resir_parser_test
+VALIDATOR_TEST_TARGET = resir_validator_test
+
+# ---------------------------------------------------------------------------
+# Default: build the main compiler
 # ---------------------------------------------------------------------------
 $(TARGET): $(MAIN_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # ---------------------------------------------------------------------------
-# Run ALL tests
+# All tests
 # ---------------------------------------------------------------------------
-test: $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET)
+test: $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET) $(VALIDATOR_TEST_TARGET)
 	@echo "\n--- Lexer tests ---"
 	./$(LEXER_TEST_TARGET)
 	@echo "\n--- Parser tests ---"
 	./$(PARSER_TEST_TARGET)
+	@echo "\n--- Validator tests ---"
+	./$(VALIDATOR_TEST_TARGET)
 
 # ---------------------------------------------------------------------------
-# Lexer tests only
+# Individual test targets
 # ---------------------------------------------------------------------------
 test_lexer: $(LEXER_TEST_TARGET)
 	./$(LEXER_TEST_TARGET)
@@ -64,33 +71,35 @@ test_lexer: $(LEXER_TEST_TARGET)
 $(LEXER_TEST_TARGET): $(LEXER_TEST_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# ---------------------------------------------------------------------------
-# Parser tests only
-# ---------------------------------------------------------------------------
 test_parser: $(PARSER_TEST_TARGET)
 	./$(PARSER_TEST_TARGET)
 
 $(PARSER_TEST_TARGET): $(PARSER_TEST_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+test_validator: $(VALIDATOR_TEST_TARGET)
+	./$(VALIDATOR_TEST_TARGET)
+
+$(VALIDATOR_TEST_TARGET): $(VALIDATOR_TEST_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 # ---------------------------------------------------------------------------
-# run: parse a .resir file and print the CFG
-# Usage: make run FILE=tests/basic_math.resir
+# Convenience run targets
 # ---------------------------------------------------------------------------
 run: $(TARGET)
 	./$(TARGET) $(FILE)
 
-# ---------------------------------------------------------------------------
-# tokens: print only the token stream (skip parsing)
-# Usage: make tokens FILE=tests/basic_math.resir
-# ---------------------------------------------------------------------------
 tokens: $(TARGET)
 	./$(TARGET) --tokens $(FILE)
 
+parse: $(TARGET)
+	./$(TARGET) --parse $(FILE)
+
 # ---------------------------------------------------------------------------
-# clean: remove all built binaries
+# Clean
 # ---------------------------------------------------------------------------
 clean:
-	rm -f $(TARGET) $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET)
+	rm -f $(TARGET) $(LEXER_TEST_TARGET) \
+	      $(PARSER_TEST_TARGET) $(VALIDATOR_TEST_TARGET)
 
-.PHONY: test test_lexer test_parser run tokens clean
+.PHONY: test test_lexer test_parser test_validator run tokens parse clean
