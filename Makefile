@@ -1,65 +1,96 @@
 # =============================================================================
-# Makefile — Build the ResIR compiler
+# Makefile — Build the ResIR compiler (Tasks 1 + 2)
 # =============================================================================
 #
 # Usage:
-#   make          — build the main compiler binary  (./resir)
-#   make test     — build and run the unit-test binary (./resir_test)
-#   make clean    — remove all built files
-#   make run FILE=tests/basic_math.resir  — compile and run on a test file
+#   make                  — build the main compiler binary  (./resir)
+#   make test             — build and run ALL unit tests (lexer + parser)
+#   make test_lexer       — build and run only the lexer tests
+#   make test_parser      — build and run only the parser tests
+#   make run FILE=tests/basic_math.resir   — parse a .resir file and print CFG
+#   make tokens FILE=tests/basic_math.resir — print only the token stream
+#   make clean            — remove all built files
 #
-# Internals:
-#   CXX    — the C++ compiler (g++ by default)
-#   CXXFLAGS — compiler flags:
-#     -std=c++17   use C++17 features (std::string_view, structured bindings…)
-#     -Wall        enable all standard warnings
-#     -Wextra      enable extra warnings
-#     -Iinclude    tell the compiler to look in `include/` for header files
+# Compiler flags:
+#   -std=c++17  enables C++17 features (std::make_unique, structured bindings…)
+#   -Wall       all standard warnings
+#   -Wextra     extra warnings
+#   -Iinclude   look for header files in the include/ directory
 # =============================================================================
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
 
-# Source files for the main binary (everything EXCEPT the test file)
-MAIN_SRCS = src/main.cpp src/lexer.cpp src/token.cpp
+# ---------------------------------------------------------------------------
+# Shared source files (used by both the main binary and the tests)
+# ---------------------------------------------------------------------------
+SHARED_SRCS = src/lexer.cpp src/token.cpp src/parser.cpp src/cfg.cpp
 
-# Source files for the test binary
-TEST_SRCS = src/test_lexer.cpp src/lexer.cpp src/token.cpp
+# Main compiler binary sources
+MAIN_SRCS = src/main.cpp $(SHARED_SRCS)
+
+# Lexer-only test sources
+LEXER_TEST_SRCS = src/test_lexer.cpp src/lexer.cpp src/token.cpp
+
+# Parser test sources (needs the full pipeline)
+PARSER_TEST_SRCS = src/test_parser.cpp $(SHARED_SRCS)
 
 # Output binary names
-TARGET      = resir
-TEST_TARGET = resir_test
+TARGET             = resir
+LEXER_TEST_TARGET  = resir_lexer_test
+PARSER_TEST_TARGET = resir_parser_test
 
 # ---------------------------------------------------------------------------
 # Default target: build the main compiler
 # ---------------------------------------------------------------------------
-# $@ = the target name (resir)
-# $^ = all prerequisites (the source files)
 $(TARGET): $(MAIN_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # ---------------------------------------------------------------------------
-# test target: build and immediately run the unit tests
+# Run ALL tests
 # ---------------------------------------------------------------------------
-test: $(TEST_TARGET)
-	./$(TEST_TARGET)
+test: $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET)
+	@echo "\n--- Lexer tests ---"
+	./$(LEXER_TEST_TARGET)
+	@echo "\n--- Parser tests ---"
+	./$(PARSER_TEST_TARGET)
 
-$(TEST_TARGET): $(TEST_SRCS)
+# ---------------------------------------------------------------------------
+# Lexer tests only
+# ---------------------------------------------------------------------------
+test_lexer: $(LEXER_TEST_TARGET)
+	./$(LEXER_TEST_TARGET)
+
+$(LEXER_TEST_TARGET): $(LEXER_TEST_SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # ---------------------------------------------------------------------------
-# run target: compile then lex a specific file
+# Parser tests only
+# ---------------------------------------------------------------------------
+test_parser: $(PARSER_TEST_TARGET)
+	./$(PARSER_TEST_TARGET)
+
+$(PARSER_TEST_TARGET): $(PARSER_TEST_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# ---------------------------------------------------------------------------
+# run: parse a .resir file and print the CFG
 # Usage: make run FILE=tests/basic_math.resir
 # ---------------------------------------------------------------------------
 run: $(TARGET)
 	./$(TARGET) $(FILE)
 
 # ---------------------------------------------------------------------------
-# clean: remove built binaries
+# tokens: print only the token stream (skip parsing)
+# Usage: make tokens FILE=tests/basic_math.resir
+# ---------------------------------------------------------------------------
+tokens: $(TARGET)
+	./$(TARGET) --tokens $(FILE)
+
+# ---------------------------------------------------------------------------
+# clean: remove all built binaries
 # ---------------------------------------------------------------------------
 clean:
-	rm -f $(TARGET) $(TEST_TARGET)
+	rm -f $(TARGET) $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET)
 
-# `.PHONY` tells make these are not file names (prevents conflicts with
-# files named "test", "clean", or "run").
-.PHONY: test clean run
+.PHONY: test test_lexer test_parser run tokens clean
