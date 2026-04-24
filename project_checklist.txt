@@ -10,15 +10,15 @@ Phase 1: The Foundation (Tasks 1 & 2)
             simplify the logic.
     
 Phase 2: Meaning & Output (Tasks 3 & 4)
-    [ ] Task 3: Semantic Pass. Validate the "well-behaved" IR.
-        [ ] Check that every jump and cjump points to a label that actually exists.
-        [ ] Verify that return types match the function signature.
-        [ ] Implement the member_ptr check: the base must be a ptr<P> and the field 
+    [X] Task 3: Semantic Pass. Validate the "well-behaved" IR.
+        [X] Check that every jump and cjump points to a label that actually exists.
+        [X] Verify that return types match the function signature.
+        [X] Implement the member_ptr check: the base must be a ptr<P> and the field 
             must exist in the extern type declaration.
         
-    [ ] Task 4: C Generation. Translate ResIR to C.
-        [ ] Map i32 to int32_t, f64 to double, and bool to bool (via <stdbool.h>).
-        [ ] Use the suggested "label and goto" strategy for blocks to keep it simple.
+    [X] Task 4: C Generation. Translate ResIR to C.
+        [X] Map i32 to int32_t, f64 to double, and bool to bool (via <stdbool.h>).
+        [X] Use the suggested "label and goto" strategy for blocks to keep it simple.
     
 Phase 3: Advanced Analysis (Task 5)
     [ ] Task 5: Datalog. Choose an analysis like "Live Variable Analysis".
