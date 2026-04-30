@@ -58,8 +58,8 @@ int main(int argc, char* argv[]) {
         std::cerr << "  --parse        print parsed CFG, skip validation\n";
         std::cerr << "  --codegen      validate then print generated C to stdout\n";
         std::cerr << "  -o out.c       validate then write generated C to out.c\n";
-        std::cerr << "  --analyze      validate then write Datalog facts to facts/\n";
-        std::cerr << "  -f <dir>       fact output directory (default: facts/)\n";
+        std::cerr << "  --analyze      validate then write Datalog facts to datalog/facts/\n";
+        std::cerr << "  -f <dir>       fact output directory (default: datalog/facts/)\n";
         return 1;
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     bool        codegen_only = false;
     bool        analyze_mode = false;  // --analyze: write Datalog fact files
     std::string output_file;           // -o <file>
-    std::string facts_dir    = "facts/"; // -f <dir>: where to write .facts files
+    std::string facts_dir    = "datalog/facts/"; // -f <dir>: where to write .facts files
     std::string path;
 
     for (int i = 1; i < argc; ++i) {

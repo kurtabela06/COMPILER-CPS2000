@@ -62,12 +62,12 @@
 //     bb0\tzero
 //     bb1\td
 //
-// These files are written to a folder called "facts/".
+// These files are written to a folder called "datalog/facts/".
 //
 // HOW TO USE
 // ───────────
 //   FactExtractor fx(prog);
-//   if (!fx.extract("facts/")) {
+//   if (!fx.extract("datalog/facts/")) {
 //       std::cerr << fx.get_error() << "\n";
 //   }
 // =============================================================================

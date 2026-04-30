@@ -26,11 +26,11 @@ COMPILER-CPS2000/
 ├── datalog/                        # Task 5: Soufflé Datalog analysis
 │   ├── analysis.dl                 # Datalog rules (live-variable / reaching-defs)
 │   └── facts/                      # Generated .facts files exported from the parser
+│       ├── def.facts               # Definitions: def(stmt_id, %local)
+│       ├── edge.facts              # CFG edges: edge(bb0, bb1)
+│       └── use.facts               # Uses: use(stmt_id, %local)
 │
-├── facts/                          # Facts directory at root
-│   ├── def.facts                   # Definitions: def(stmt_id, %local)
-│   ├── edge.facts                  # CFG edges: edge(bb0, bb1)
-│   └── use.facts                   # Uses: use(stmt_id, %local)
+├── facts/                          # Empty root facts directory (legacy / not used by default)
 │
 ├── tests/                          # Test suite (.resir inputs + expected outputs)
 │   ├── basic_math.resir            # abs_diff example from the spec

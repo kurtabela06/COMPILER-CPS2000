@@ -15,7 +15,7 @@
 #   make parse FILE=<f>           parse + print CFG (skip validate)
 #   make codegen FILE=<f>         validate + print generated C to stdout
 #   make emit FILE=<f> OUT=<c>    validate + write generated C to OUT
-#   make analyze FILE=<f>         validate + write Datalog facts to facts/
+#   make analyze FILE=<f>         validate + write Datalog facts to datalog/facts/
 #   make souffle FILE=<f>         analyze + run souffle (requires souffle installed)
 #   make clean                    remove all built binaries and generated files
 #
@@ -30,7 +30,7 @@ CXX      = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
 
 # Default facts directory (can be overridden: make analyze FILE=x FACTS_DIR=my/)
-FACTS_DIR = facts/
+FACTS_DIR = datalog/facts/
 # Default Soufflé output directory
 SOUFFLE_OUT = output/
 # Soufflé Datalog script
@@ -192,7 +192,8 @@ clean:
 	      $(PARSER_TEST_TARGET) $(VALIDATOR_TEST_TARGET) \
 	      $(CODEGEN_TEST_TARGET) $(ANALYSIS_TEST_TARGET) \
 	      generated.c
-	rm -rf facts/ output/
+	rm -f $(FACTS_DIR)*.facts facts/*.facts || true
+	rm -rf output/
 
 .PHONY: test test_lexer test_parser test_validator test_codegen test_analysis \
         run tokens parse codegen emit analyze souffle clean

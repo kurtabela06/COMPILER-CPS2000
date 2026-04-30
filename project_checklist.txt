@@ -28,9 +28,9 @@ Phase 3: Advanced Analysis (Task 5)
         [X] (Bonus) Use the results to warn the user about dead code.
         
 Phase 4: Research & Documentation (Task 6 & Final)
-    [ ] Task 6: E-Graphs Paper. Write the separate 2-3 page paper.
-        [ ] Research the egg library and equality saturation.
-        [ ] Explain how e-graphs could have optimized the ResIR math expressions better 
+    [X] Task 6: E-Graphs Paper. Write the separate 2-3 page paper.
+        [X] Research the egg library and equality saturation.
+        [X] Explain how e-graphs could have optimized the ResIR math expressions better 
             than your Task 5 analysis.
         [ ] Final Report & Video.
         [ ] Compile your findings, including Datalog rules and test results.

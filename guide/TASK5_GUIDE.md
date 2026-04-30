@@ -20,9 +20,9 @@ ResIR source
 In-memory CFG
     │
     ▼  FactExtractor (C++ — analysis.cpp)
-facts/edge.facts    ← control-flow edges
-facts/def.facts     ← variable definitions
-facts/use.facts     ← variable uses
+datalog/facts/edge.facts    ← control-flow edges
+datalog/facts/def.facts     ← variable definitions
+datalog/facts/use.facts     ← variable uses
     │
     ▼  Soufflé Datalog engine (datalog/analysis.dl)
 output/live_out.csv ← variables live at exit of each block
@@ -80,7 +80,7 @@ make
 
 # 2. Generate Datalog fact files from a ResIR program
 make analyze FILE=tests/basic_math.resir
-# Writes: facts/edge.facts  facts/def.facts  facts/use.facts
+# Writes: datalog/facts/edge.facts  datalog/facts/def.facts  datalog/facts/use.facts
 
 # 3. Run the full analysis (generate facts + run Soufflé)
 make souffle FILE=tests/basic_math.resir
@@ -103,14 +103,14 @@ The key insight is that Soufflé cannot read C++ structs.  We need a
 Soufflé reads **tab-separated value (TSV) files**, one tuple per line.
 Our C++ `FactExtractor` writes these from the in-memory CFG:
 
-**`facts/edge.facts`** — control-flow edges
+**`datalog/facts/edge.facts`** — control-flow edges
 ```
 bb0    bb1
 bb0    bb2
 ```
 *Meaning: there is a jump from `bb0` to `bb1` and from `bb0` to `bb2`.*
 
-**`facts/def.facts`** — variable definitions (writes)
+**`datalog/facts/def.facts`** — variable definitions (writes)
 ```
 bb0    zero
 bb0    d
@@ -119,7 +119,7 @@ bb1    r
 ```
 *Meaning: `zero`, `d`, and `is_neg` are assigned in `bb0`; `r` in `bb1`.*
 
-**`facts/use.facts`** — variable uses (reads)
+**`datalog/facts/use.facts`** — variable uses (reads)
 ```
 bb0    a
 bb0    b

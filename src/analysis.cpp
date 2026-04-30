@@ -9,9 +9,9 @@
 // The job is simple: read the in-memory CFG (built by the parser in Task 2
 // and validated in Task 3) and write three text files that Soufflé can read:
 //
-//   facts/edge.facts  — control-flow edges between blocks
-//   facts/def.facts   — which variables are WRITTEN in which block
-//   facts/use.facts   — which variables are READ   in which block
+//   datalog/facts/edge.facts  — control-flow edges between blocks
+//   datalog/facts/def.facts   — which variables are WRITTEN in which block
+//   datalog/facts/use.facts   — which variables are READ   in which block
 //
 // WORKED EXAMPLE — abs_diff
 // ──────────────────────────
