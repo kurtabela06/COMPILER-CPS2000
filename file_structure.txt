@@ -4,40 +4,53 @@ COMPILER-CPS2000/
 │   ├── lexer.hpp                   # Task 1: Lexer class declaration
 │   ├── parser.hpp                  # Task 2: Parser class declaration
 │   ├── cfg.hpp                     # Task 2: CFG (Control Flow Graph) node types
-│   └── validator.hpp               # Task 3: Semantic/type-checker declaration
+│   ├── validator.hpp               # Task 3: Semantic/type-checker declaration
+│   ├── codegen.hpp                 # Task 4: Code generation declaration
+│   └── analysis.hpp                # Task 5: Analysis declaration
 │
 ├── src/                            # Implementation files
 │   ├── main.cpp                    # Entry point: orchestrates Tasks 1-5
+│   ├── token.cpp                   # Task 1: Token implementation
 │   ├── lexer.cpp                   # Task 1: Table-driven lexer (DFA + transition table)
 │   ├── parser.cpp                  # Task 2: Hand-written top-down parser
 │   ├── cfg.cpp                     # Task 2: CFG node implementations
 │   ├── validator.cpp               # Task 3: Validation and semantic checking
+│   ├── codegen.cpp                 # Task 4: Code generation implementation
+│   ├── analysis.cpp                # Task 5: Analysis implementation
+│   ├── test_lexer.cpp              # Task 1: Unit tests for the lexer
 │   ├── test_parser.cpp             # Task 2: Unit tests for the parser
-│   └── test_validator.cpp          # Task 3: Unit tests for the validator
+│   ├── test_validator.cpp          # Task 3: Unit tests for the validator
+│   ├── test_codegen.cpp            # Task 4: Unit tests for code generation
+│   └── test_analysis.cpp           # Task 5: Unit tests for analysis
 │
 ├── datalog/                        # Task 5: Soufflé Datalog analysis
 │   ├── analysis.dl                 # Datalog rules (live-variable / reaching-defs)
 │   └── facts/                      # Generated .facts files exported from the parser
-│       ├── edge.facts              # CFG edges: edge(bb0, bb1)
-│       ├── def.facts               # Definitions: def(stmt_id, %local)
-│       └── use.facts               # Uses: use(stmt_id, %local)
+│
+├── facts/                          # Facts directory at root
+│   ├── def.facts                   # Definitions: def(stmt_id, %local)
+│   ├── edge.facts                  # CFG edges: edge(bb0, bb1)
+│   └── use.facts                   # Uses: use(stmt_id, %local)
 │
 ├── tests/                          # Test suite (.resir inputs + expected outputs)
 │   ├── basic_math.resir            # abs_diff example from the spec
 │   ├── struct_access.resir         # member_ptr / extern type example from the spec
 │   └── expected_output/            # Reference .c files for Task 4 regression tests
 │
+├── output/                         # Output directory
+│
 ├── docs/
-│   ├── report.md                   # Implementation report draft
-│   └── egraphs_paper.pdf           # Task 6: Separate 2-page e-graphs paper
+│   └── report.md                   # Implementation report draft
 │
 ├── TASK1_GUIDE.md                  # Task 1 tutorial: compile, run, DFA diagram
 ├── TASK2_GUIDE.md                  # Task 2 tutorial: parsing, AST construction
 ├── TASK3_GUIDE.md                  # Task 3 tutorial: semantic validation
+├── TASK4_GUIDE.md                  # Task 4 tutorial: C generation, translate ResIR to C
+├── TASK5_GUIDE.md                  # Task 5 tutorial: datalog
 ├── Makefile                        # `make` → build, `make test` → run tests
 ├── file_structure.txt              # This file
 ├── project_checklist.txt           # Tracking checklist for all tasks
-└── README.md                       # Quick-start instructions
+└── README.md                       # Repository overview
 
 Language choices:
   Tasks 1-4  →  C++17  (g++, no external libraries)
