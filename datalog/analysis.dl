@@ -1,0 +1,327 @@
+// =============================================================================
+// analysis.dl  —  Live Variable Analysis using Soufflé Datalog  (Task 5)
+// =============================================================================
+//
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  BEGINNER'S GUIDE TO DATALOG                                            │
+// └─────────────────────────────────────────────────────────────────────────┘
+//
+// WHAT IS DATALOG?
+// ─────────────────
+// Datalog is a "logic programming" language.  Instead of telling the computer
+// HOW to compute something (like in C++), you tell it WHAT is true.
+//
+// In C++ you write:
+//   for (each block B) {
+//       if (block B has a successor S) {
+//           if (variable X is live_in at S) {
+//               mark X as live_out at B;
+//           }
+//       }
+//   }
+//
+// In Datalog you write:
+//   live_out(B, X) :- edge(B, S), live_in(S, X).
+//
+// That single line says: "live_out(B, X) is TRUE whenever there exists some S
+// such that edge(B, S) is TRUE and live_in(S, X) is TRUE."
+//
+// The Soufflé engine figures out HOW to compute this efficiently.  You just
+// declare the logical relationships.
+//
+// KEY CONCEPT 1 — RELATIONS
+// ──────────────────────────
+// A "relation" is like a database table.  It has a name and typed columns.
+// A row in the table is called a "fact" or a "tuple".
+//
+// Example:
+//   .decl parent(child: symbol, parent: symbol)
+//   This declares a table called `parent` with two text columns.
+//   A row like  parent("Alice", "Bob")  means "Bob is a parent of Alice".
+//
+// KEY CONCEPT 2 — FACTS (INPUT DATA)
+// ────────────────────────────────────
+// Facts are rows that are given as input — they are known to be true.
+// We declare input facts with  .input  which tells Soufflé to load from a file.
+//
+// Our C++ compiler writes these input files:
+//   edge.facts   →  tuples like  "bb0\tbb1"  (edge from bb0 to bb1)
+//   def.facts    →  tuples like  "bb0\tzero" (zero is written in bb0)
+//   use.facts    →  tuples like  "bb0\ta"    (a is read in bb0)
+//
+// KEY CONCEPT 3 — RULES (DERIVED FACTS)
+// ───────────────────────────────────────
+// Rules derive NEW facts from existing ones.  The syntax is:
+//
+//   head :- body1, body2, body3.
+//
+//   "head is true IF body1 AND body2 AND body3 are all true."
+//
+//   Variables in rules start with an UPPERCASE letter.
+//   Constants (known values) are in lowercase or quoted strings.
+//
+// KEY CONCEPT 4 — RECURSION
+// ──────────────────────────
+// Datalog rules can be recursive!  A relation can depend on itself.
+// Soufflé evaluates these iteratively: it keeps applying the rules until
+// no new facts are produced ("fixpoint").
+//
+// This is exactly what we need for liveness, which propagates backwards
+// through the CFG one block at a time until it stabilises.
+//
+// =============================================================================
+// THE LIVENESS EQUATIONS
+// =============================================================================
+//
+// Live variable analysis is a BACKWARD dataflow analysis.
+// We compute two sets for each block B:
+//
+//   live_in(B)   = use(B)  ∪  (live_out(B) − def(B))
+//   live_out(B)  = ∪ { live_in(S) | S is a successor of B }
+//
+// Reading these aloud:
+//
+//   "A variable X is live-in to block B if:
+//     EITHER  X is used (read) in B,
+//     OR      X is live-out of B AND X is not defined (overwritten) in B."
+//
+//   "A variable X is live-out of block B if:
+//     X is live-in to ANY successor block of B."
+//
+// WHY BACKWARD?
+//   Liveness travels in the OPPOSITE direction to program execution.
+//   We ask: "Will this value be needed LATER?"  So we start at the end
+//   of the function and propagate backwards toward the entry.
+//
+// =============================================================================
+
+
+// =============================================================================
+// SECTION 1 — INPUT RELATIONS
+// These are the facts written by the C++ fact extractor (analysis.cpp).
+// Soufflé reads them from .facts files in the directory given to --fact-dir.
+// =============================================================================
+
+// .decl declares a relation (gives it a name and column types).
+// `symbol` is Soufflé's string type.
+
+// edge(From, To) — there is a direct control-flow edge from block From to To.
+// This comes from every jump and cjump terminator in the CFG.
+.decl edge(from: symbol, to: symbol)
+.input edge(filename="edge.facts")
+// File format example:
+//   bb0    bb1
+//   bb0    bb2
+
+// def(Block, Var) — variable Var is DEFINED (written to) in Block.
+// A "definition" is any assignment: the destination local of a statement.
+.decl def(block: symbol, var: symbol)
+.input def(filename="def.facts")
+// File format example:
+//   bb0    zero
+//   bb0    d
+//   bb0    is_neg
+
+// use(Block, Var) — variable Var is USED (read from) in Block.
+// A "use" is any time a variable's value is read: as an operand, condition,
+// return value, or argument.
+.decl use(block: symbol, var: symbol)
+.input use(filename="use.facts")
+// File format example:
+//   bb0    a
+//   bb0    b
+//   bb0    d
+
+
+// =============================================================================
+// SECTION 2 — DERIVED RELATIONS (LIVENESS)
+// These are computed by the rules below.  Soufflé infers their contents.
+// =============================================================================
+
+// live_in(Block, Var) — Var is live (needed) on ENTRY to Block.
+// This means: Var's current value might be read before being overwritten
+// anywhere from the start of Block onwards.
+.decl live_in(block: symbol, var: symbol)
+
+// live_out(Block, Var) — Var is live (needed) on EXIT from Block.
+// This means: at least one successor block will eventually read Var.
+.decl live_out(block: symbol, var: symbol)
+
+
+// =============================================================================
+// SECTION 3 — THE LIVENESS RULES
+// =============================================================================
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rule 1 — live_out from successors
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// live_out(B, X) :- edge(B, S), live_in(S, X).
+//
+// In English:
+//   "X is live on exit from B  IF  there is an edge from B to some successor S
+//    AND X is live on entry to S."
+//
+// WHY: If any path leaving B leads to a use of X before a re-definition of X,
+// then X is live at the exit of B.  We need to keep X's value alive across
+// the jump.
+//
+// Example (abs_diff):
+//   B = bb0, S = bb1, X = d
+//   edge(bb0, bb1) ✓
+//   live_in(bb1, d) ✓   (d is used in bb1: %r = un neg %d)
+//   Therefore: live_out(bb0, d) ✓
+//
+live_out(B, X) :-
+    edge(B, S),        // there is an edge from B to successor S
+    live_in(S, X).     // X is live on entry to S
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rule 2a — use generates live_in
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// live_in(B, X) :- use(B, X).
+//
+// In English:
+//   "X is live on entry to B  IF  X is used in B."
+//
+// WHY: If B reads X, then X's value is clearly needed when we enter B.
+// We haven't entered B yet, but we can already see that X will be needed.
+//
+// Example:
+//   B = bb1, X = d
+//   use(bb1, d) ✓   (%r = un neg %d — d is read here)
+//   Therefore: live_in(bb1, d) ✓
+//
+live_in(B, X) :-
+    use(B, X).          // X is read inside block B
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rule 2b — live_out propagates backward through B (unless killed)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// live_in(B, X) :- live_out(B, X), !def(B, X).
+//
+// In English:
+//   "X is live on entry to B  IF  X is live on exit from B  AND
+//    X is NOT redefined (killed) in B."
+//
+// WHY: If X is needed after B, and B doesn't overwrite X, then X must have
+// been live before B too (its current value "flows through" B unchanged).
+//
+// The '!' means logical negation — "it is NOT the case that def(B, X) holds".
+// Soufflé handles stratified negation: it evaluates the positive rules first
+// to completion, then applies negation.
+//
+// Example:
+//   B = bb0, X = a
+//   live_out(bb0, a)?  — is `a` needed in a successor?
+//     edge(bb0, bb1) and live_in(bb1, a)?  No, a isn't used in bb1.
+//     edge(bb0, bb2) and live_in(bb2, a)?  No, a isn't used in bb2.
+//   So live_out(bb0, a) is false → this rule does NOT fire for a in bb0.
+//   But use(bb0, a) IS true (bin sub %a, %b) → Rule 2a adds live_in(bb0, a).
+//
+//   Now consider X = d:
+//   live_out(bb0, d) ✓  (from Rule 1 above)
+//   def(bb0, d) ✓       (d is assigned in bb0)
+//   Since def(bb0, d) IS true, the "!def(B, X)" check FAILS.
+//   So this rule does NOT add live_in(bb0, d) — d is killed in bb0,
+//   so it is NOT live on entry to bb0 through this rule.
+//   (But it IS added by Rule 2a because d is also used in bb0.)
+//
+live_in(B, X) :-
+    live_out(B, X),    // X is needed after B exits
+    !def(B, X).        // AND B does not overwrite X (so the old value flows through)
+
+
+// =============================================================================
+// SECTION 4 — OUTPUT RELATIONS
+// =============================================================================
+// .output tells Soufflé to write the computed relation to a CSV file.
+// The file will be written to the --output-dir given on the command line.
+
+// live_in.csv — variables live on entry to each block
+.output live_in(filename="live_in.csv")
+
+// live_out.csv — variables live on exit from each block
+// This is the most useful output: it tells us what's live at the END of
+// each block, which is important for register allocation (deciding what to
+// spill) and dead code elimination (if a variable is never live_out of its
+// defining block, the assignment is dead).
+.output live_out(filename="live_out.csv")
+
+// Also output the input relations (useful for debugging — you can verify
+// that the facts were loaded correctly).
+.output def(filename="def_loaded.csv")
+.output use(filename="use_loaded.csv")
+.output edge(filename="edge_loaded.csv")
+
+
+// =============================================================================
+// SECTION 5 — DEAD ASSIGNMENT DETECTION
+// =============================================================================
+//
+// A BONUS derived relation: which assignments are provably dead?
+//
+// An assignment  %x = <rhs>  in block B is DEAD if:
+//   - x is defined (has_dest = true) in B, AND
+//   - x is NOT live_out of B
+//   (meaning no successor will ever read the value we just computed)
+//
+// Note: a variable can be defined in B and also used in B (before the
+// definition).  The def/use sets we computed are per-block, not per-statement
+// (we didn't track intra-block ordering).  So this analysis is conservative:
+// we flag x as dead only when it is defined in B and not live-out of B.
+
+// dead_def(Block, Var) — Var is defined in Block but its value is never used
+// by any successor.  This is a candidate for dead-code elimination.
+.decl dead_def(block: symbol, var: symbol)
+.output dead_def(filename="dead_defs.csv")
+
+// Rule: a definition is dead if the defined variable is not live-out.
+dead_def(B, X) :-
+    def(B, X),          // X is assigned in block B
+    !live_out(B, X).    // AND X is not needed by any successor
+
+// WHY IS THIS USEFUL?
+//   If you see  dead_def(bb0, r)  it means the assignment %r = ... in bb0
+//   computes a value that nobody reads.  A later optimisation pass could
+//   safely delete that assignment (saving CPU time and potentially a register).
+//
+// CAVEAT: This is an INTRAPROCEDURAL analysis — it only looks inside one
+// function.  If `r` is used as a parameter to another function we didn't
+// analyse, we might wrongly flag it.  For this assignment that is fine.
+
+
+// =============================================================================
+// END OF ANALYSIS
+// =============================================================================
+//
+// HOW TO RUN:
+//   # Generate fact files from a .resir source:
+//   ./resir --analyze tests/basic_math.resir
+//
+//   # Run Soufflé on the fact files:
+//   souffle -F facts/ -D output/ datalog/analysis.dl
+//
+//   # Check the results:
+//   cat output/live_out.csv
+//   cat output/dead_defs.csv
+//
+// EXPECTED OUTPUT for abs_diff:
+//   live_out.csv will show:
+//     bb0    a     (a flows into bb1/bb2 via d — wait, d killed a? No:
+//                   a is used in bb0, so live_in(bb0, a) via use rule,
+//                   but the function entry has no predecessor so live_out
+//                   of a "virtual entry" is not tracked here.
+//                   Key insight: params are considered live at entry.)
+//     bb0    d     (d needed in bb1)
+//     bb0    is_neg (is_neg used in cjump condition — USE fact in bb0)
+//     bb1    r     (r returned in bb1)
+//
+//   dead_defs.csv will show:
+//     bb0    zero  (zero is computed but not live out — it was only used
+//                   inside bb0 itself, so after bb0 exits, nobody needs it)
+// =============================================================================

@@ -21,11 +21,11 @@ Phase 2: Meaning & Output (Tasks 3 & 4)
         [X] Use the suggested "label and goto" strategy for blocks to keep it simple.
     
 Phase 3: Advanced Analysis (Task 5)
-    [ ] Task 5: Datalog. Choose an analysis like "Live Variable Analysis".
-        [ ] Write Rust code to traverse your CFG and export "facts" (e.g., edge(bb0, bb1))
+    [X] Task 5: Datalog. Choose an analysis like "Live Variable Analysis".
+        [X] Write Rust code to traverse your CFG and export "facts" (e.g., edge(bb0, bb1))
             into text files.
-        [ ] Write a Soufflé .dl file with rules to compute which variables are "live".
-        [ ] (Bonus) Use the results to warn the user about dead code.
+        [X] Write a Soufflé .dl file with rules to compute which variables are "live".
+        [X] (Bonus) Use the results to warn the user about dead code.
         
 Phase 4: Research & Documentation (Task 6 & Final)
     [ ] Task 6: E-Graphs Paper. Write the separate 2-3 page paper.
