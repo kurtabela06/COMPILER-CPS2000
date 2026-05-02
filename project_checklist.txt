@@ -32,6 +32,6 @@ Phase 4: Research & Documentation (Task 6 & Final)
         [X] Research the egg library and equality saturation.
         [X] Explain how e-graphs could have optimized the ResIR math expressions better 
             than your Task 5 analysis.
-        [ ] Final Report & Video.
+        [X] Final Report & Video.
         [X] Compile your findings, including Datalog rules and test results.
-        [ ] Record a 5-minute (max) 720p demo of your compiler in action.
+        [X] Record a 5-minute (max) 720p demo of your compiler in action.

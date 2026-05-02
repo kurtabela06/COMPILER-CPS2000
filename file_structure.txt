@@ -1,63 +1,103 @@
-COMPILER-CPS2000/
-├── include/                        # Public header files (shared by all tasks)
-│   ├── token.hpp                   # Task 1: TokenKind enum + Token struct
-│   ├── lexer.hpp                   # Task 1: Lexer class declaration
-│   ├── parser.hpp                  # Task 2: Parser class declaration
-│   ├── cfg.hpp                     # Task 2: CFG (Control Flow Graph) node types
-│   ├── validator.hpp               # Task 3: Semantic/type-checker declaration
-│   ├── codegen.hpp                 # Task 4: Code generation declaration
-│   └── analysis.hpp                # Task 5: Analysis declaration
-│
-├── src/                            # Implementation files
-│   ├── main.cpp                    # Entry point: orchestrates Tasks 1-5
-│   ├── token.cpp                   # Task 1: Token implementation
-│   ├── lexer.cpp                   # Task 1: Table-driven lexer (DFA + transition table)
-│   ├── parser.cpp                  # Task 2: Hand-written top-down parser
-│   ├── cfg.cpp                     # Task 2: CFG node implementations
-│   ├── validator.cpp               # Task 3: Validation and semantic checking
-│   ├── codegen.cpp                 # Task 4: Code generation implementation
-│   ├── analysis.cpp                # Task 5: Analysis implementation
-│   ├── test_lexer.cpp              # Task 1: Unit tests for the lexer
-│   ├── test_parser.cpp             # Task 2: Unit tests for the parser
-│   ├── test_validator.cpp          # Task 3: Unit tests for the validator
-│   ├── test_codegen.cpp            # Task 4: Unit tests for code generation
-│   └── test_analysis.cpp           # Task 5: Unit tests for analysis
-│
-├── datalog/                        # Task 5: Soufflé Datalog analysis
-│   ├── analysis.dl                 # Datalog rules (live-variable / reaching-defs)
-│   └── facts/                      # Generated .facts files exported from the parser
-│       ├── def.facts               # Definitions: def(stmt_id, %local)
-│       ├── edge.facts              # CFG edges: edge(bb0, bb1)
-│       └── use.facts               # Uses: use(stmt_id, %local)
-│
-├── facts/                          # Empty root facts directory (legacy / not used by default)
-│
-├── tests/                          # Test suite (.resir inputs + expected outputs)
-│   ├── basic_math.resir            # abs_diff example from the spec
-│   ├── struct_access.resir         # member_ptr / extern type example from the spec
-│   └── expected_output/            # Reference .c files for Task 4 regression tests
-│
-├── output/                         # Output directory
-│
-├── docs/
-│   └── report.md                   # Implementation report draft
-│
-├── TASK1_GUIDE.md                  # Task 1 tutorial: compile, run, DFA diagram
-├── TASK2_GUIDE.md                  # Task 2 tutorial: parsing, AST construction
-├── TASK3_GUIDE.md                  # Task 3 tutorial: semantic validation
-├── TASK4_GUIDE.md                  # Task 4 tutorial: C generation, translate ResIR to C
-├── TASK5_GUIDE.md                  # Task 5 tutorial: datalog
-├── Makefile                        # `make` → build, `make test` → run tests
-├── file_structure.txt              # This file
-├── project_checklist.txt           # Tracking checklist for all tasks
-└── README.md                       # Repository overview
+COMPILER-CPS2000/  —  CPS2000 ResIR Compiler  (final submission layout)
+=======================================================================
 
-Language choices:
-  Tasks 1-4  →  C++17  (g++, no external libraries)
-  Task 5     →  Soufflé Datalog + C++17 (Soufflé interoperates well with C++)
-  Task 6     →  PDF paper (separate from this implementation)
+include/                        Public header files (one per pass)
+├── token.hpp                   Task 1: TokenKind enum + Token struct
+├── lexer.hpp                   Task 1: Lexer class declaration (DFA states + classes)
+├── parser.hpp                  Task 2: Parser class declaration
+├── cfg.hpp                     Task 2: CFG node types (Program/Function/Block/Stmt/Term/Rhs)
+├── validator.hpp               Task 3: Semantic validator + type checker declaration
+├── codegen.hpp                 Task 4: C code generator declaration
+└── analysis.hpp                Task 5: FactExtractor declaration (Datalog facts)
 
-Build:
-  make          builds ./resir  (the main compiler binary)
-  make test     builds and runs ./resir_test  (unit tests)
-  make clean    removes built binaries
+src/                            Implementation + unit tests
+├── main.cpp                    Entry point: orchestrates the full pipeline (Tasks 1-5)
+├── token.cpp                   Task 1: token_kind_name() helper
+├── lexer.cpp                   Task 1: table-driven DFA lexer (11x12 transition table)
+├── parser.cpp                  Task 2: hand-written recursive-descent parser
+├── cfg.cpp                     Task 2: print_program() and CFG helpers
+├── validator.cpp               Task 3: 4-phase validator + RHS type inference
+├── codegen.cpp                 Task 4: label-and-goto C generator
+├── analysis.cpp                Task 5: walks CFG -> writes edge/def/use fact files
+├── test_lexer.cpp              Task 1: 23 unit checks
+├── test_parser.cpp             Task 2: 75 unit checks
+├── test_validator.cpp          Task 3: 32 unit checks
+├── test_codegen.cpp            Task 4: 70 unit checks
+└── test_analysis.cpp           Task 5: 45 unit checks (in-memory + on-disk fact verification)
+
+datalog/                        Task 5: Soufflé Datalog program-analysis
+├── analysis.dl                 Live Variable Analysis rules + dead_def detection
+└── facts/                      Datalog input (generated by `make analyze`)
+    ├── edge.facts              CFG edges between blocks  (TSV: from \t to)
+    ├── def.facts               Variable definitions      (TSV: block \t var)
+    └── use.facts               Variable uses             (TSV: block \t var)
+
+output/                         Soufflé output (generated by `make souffle`)
+├── live_in.csv                 Variables live on entry to each block
+├── live_out.csv                Variables live on exit  from each block
+├── dead_defs.csv               Assignments whose result is never used (DCE candidates)
+└── *_loaded.csv                Echoed input relations (sanity check)
+
+tests/                          Test inputs (.resir source files from the spec)
+├── basic_math.resir            abs_diff example (cjump + arithmetic)
+├── struct_access.resir         extern type + member_ptr + load
+└── expected_output/            Reserved for golden output snapshots
+
+build/                          Compiled binaries (created by `make`, removed by `make clean`)
+├── resir                       The main compiler binary
+├── resir_lexer_test            Task 1 test runner
+├── resir_parser_test           Task 2 test runner
+├── resir_validator_test        Task 3 test runner
+├── resir_codegen_test          Task 4 test runner
+└── resir_analysis_test         Task 5 test runner
+
+guide/                          Per-task tutorial guides (markdown)
+├── TASK1_GUIDE.md              Lexer: DFA diagram, token table, CLI usage
+├── TASK2_GUIDE.md              Parser: EBNF mapping, predictive parsing
+├── TASK3_GUIDE.md              Validator: 4 check categories, type rules
+├── TASK4_GUIDE.md              Codegen: type mapping, path mangling, label-and-goto
+└── TASK5_GUIDE.md              Datalog: live-variable analysis, fact format, Soufflé install
+
+docs/                           Submission deliverables
+├── Report.pdf                  Task 6 / final implementation report
+└── E-Graphs Paper.pdf          Task 6: 2-page e-graphs research paper
+
+Makefile                        Build system (all targets documented in its header)
+file_structure.txt              This file
+project_checklist.txt           Per-task checklist of spec requirements
+README.md                       Quick-start overview
+.gitignore                      Excludes build artefacts, generated facts, OS files
+
+=======================================================================
+LANGUAGE & TOOL CHOICES
+=======================================================================
+  Tasks 1-4   C++17  (g++, no external libraries)
+  Task 5      Soufflé Datalog + C++17 fact extractor
+  Task 6      PDF paper (separate submission, in docs/)
+
+=======================================================================
+BUILD QUICK REFERENCE
+=======================================================================
+  make                          build build/resir
+  make test                     run all 5 unit-test suites (245 checks)
+  make run      FILE=tests/basic_math.resir          validate + print CFG
+  make codegen  FILE=tests/basic_math.resir          validate + print generated C
+  make emit     FILE=...        OUT=generated.c       write C to file
+  make analyze  FILE=...                              write datalog/facts/*.facts
+  make souffle  FILE=...                              run full Datalog pipeline
+  make clean                                          remove build/ + generated artefacts
+
+=======================================================================
+PIPELINE
+=======================================================================
+  .resir source
+      |
+      v   Lexer  (Task 1)   --> token stream
+      v   Parser (Task 2)   --> in-memory CFG (Program / Function / Block / Stmt / Term)
+      v   Validator (Task 3)--> well-typed CFG (or error)
+      |
+      +--> CodeGen  (Task 4)        --> generated.c   (compilable with gcc -std=c11)
+      +--> FactExtractor (Task 5)   --> datalog/facts/*.facts
+                                         |
+                                         v  Soufflé + analysis.dl
+                                         output/{live_in,live_out,dead_defs}.csv
