@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Usage:
-#   make                          build ./resir
+#   make                          build build/resir
 #   make test                     run ALL unit tests (all 5 suites)
 #   make test_lexer               run only lexer tests
 #   make test_parser              run only parser tests
@@ -17,7 +17,7 @@
 #   make emit FILE=<f> OUT=<c>    validate + write generated C to OUT
 #   make analyze FILE=<f>         validate + write Datalog facts to datalog/facts/
 #   make souffle FILE=<f>         analyze + run souffle (requires souffle installed)
-#   make clean                    remove all built binaries and generated files
+#   make clean                    remove the build/ folder + generated artefacts
 #
 # Compiler flags:
 #   -std=c++17   C++17 features (make_unique, if-init, structured bindings…)
@@ -28,6 +28,9 @@
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
+
+# All built binaries land in build/ to keep the project root tidy.
+BUILD_DIR = build
 
 # Default facts directory (can be overridden: make analyze FILE=x FACTS_DIR=my/)
 FACTS_DIR = datalog/facts/
@@ -54,20 +57,33 @@ CODEGEN_TEST_SRCS     = src/test_codegen.cpp     $(SHARED_SRCS)
 ANALYSIS_TEST_SRCS    = src/test_analysis.cpp    $(SHARED_SRCS)
 
 # ---------------------------------------------------------------------------
-# Binary names
+# Binary names — all under build/
 # ---------------------------------------------------------------------------
-TARGET                  = resir
-LEXER_TEST_TARGET       = resir_lexer_test
-PARSER_TEST_TARGET      = resir_parser_test
-VALIDATOR_TEST_TARGET   = resir_validator_test
-CODEGEN_TEST_TARGET     = resir_codegen_test
-ANALYSIS_TEST_TARGET    = resir_analysis_test
+TARGET                  = $(BUILD_DIR)/resir
+LEXER_TEST_TARGET       = $(BUILD_DIR)/resir_lexer_test
+PARSER_TEST_TARGET      = $(BUILD_DIR)/resir_parser_test
+VALIDATOR_TEST_TARGET   = $(BUILD_DIR)/resir_validator_test
+CODEGEN_TEST_TARGET     = $(BUILD_DIR)/resir_codegen_test
+ANALYSIS_TEST_TARGET    = $(BUILD_DIR)/resir_analysis_test
 
 # ---------------------------------------------------------------------------
-# Default: build the main compiler
+# Default goal: build the main compiler (must come BEFORE the build/ rule
+# so that `make` with no arguments builds resir, not the directory).
 # ---------------------------------------------------------------------------
-$(TARGET): $(MAIN_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+.DEFAULT_GOAL := all
+
+all: $(TARGET)
+
+# ---------------------------------------------------------------------------
+# Ensure build/ exists before any compile.
+# Order-only prerequisite (after `|`): make rebuilds the binary if BUILD_DIR
+# was just created, but does NOT rebuild every time the dir's mtime changes.
+# ---------------------------------------------------------------------------
+$(BUILD_DIR):
+	@mkdir -p $(BUILD_DIR)
+
+$(TARGET): $(MAIN_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN_SRCS)
 
 # ---------------------------------------------------------------------------
 # All tests
@@ -91,32 +107,32 @@ test: $(LEXER_TEST_TARGET) $(PARSER_TEST_TARGET) $(VALIDATOR_TEST_TARGET) \
 test_lexer: $(LEXER_TEST_TARGET)
 	./$(LEXER_TEST_TARGET)
 
-$(LEXER_TEST_TARGET): $(LEXER_TEST_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(LEXER_TEST_TARGET): $(LEXER_TEST_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(LEXER_TEST_SRCS)
 
 test_parser: $(PARSER_TEST_TARGET)
 	./$(PARSER_TEST_TARGET)
 
-$(PARSER_TEST_TARGET): $(PARSER_TEST_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(PARSER_TEST_TARGET): $(PARSER_TEST_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(PARSER_TEST_SRCS)
 
 test_validator: $(VALIDATOR_TEST_TARGET)
 	./$(VALIDATOR_TEST_TARGET)
 
-$(VALIDATOR_TEST_TARGET): $(VALIDATOR_TEST_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(VALIDATOR_TEST_TARGET): $(VALIDATOR_TEST_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(VALIDATOR_TEST_SRCS)
 
 test_codegen: $(CODEGEN_TEST_TARGET)
 	./$(CODEGEN_TEST_TARGET)
 
-$(CODEGEN_TEST_TARGET): $(CODEGEN_TEST_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(CODEGEN_TEST_TARGET): $(CODEGEN_TEST_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(CODEGEN_TEST_SRCS)
 
 test_analysis: $(ANALYSIS_TEST_TARGET)
 	./$(ANALYSIS_TEST_TARGET)
 
-$(ANALYSIS_TEST_TARGET): $(ANALYSIS_TEST_SRCS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(ANALYSIS_TEST_TARGET): $(ANALYSIS_TEST_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $(ANALYSIS_TEST_SRCS)
 
 # ---------------------------------------------------------------------------
 # Convenience run targets
@@ -185,15 +201,13 @@ souffle: analyze
 	fi
 
 # ---------------------------------------------------------------------------
-# Clean
+# Clean — remove the entire build/ folder plus generated artefacts.
 # ---------------------------------------------------------------------------
 clean:
-	rm -f $(TARGET) $(LEXER_TEST_TARGET) \
-	      $(PARSER_TEST_TARGET) $(VALIDATOR_TEST_TARGET) \
-	      $(CODEGEN_TEST_TARGET) $(ANALYSIS_TEST_TARGET) \
-	      generated.c
-	rm -f $(FACTS_DIR)*.facts facts/*.facts || true
+	rm -rf $(BUILD_DIR)
+	rm -f generated.c
+	rm -f $(FACTS_DIR)*.facts facts/*.facts 2>/dev/null || true
 	rm -rf output/
 
-.PHONY: test test_lexer test_parser test_validator test_codegen test_analysis \
+.PHONY: all test test_lexer test_parser test_validator test_codegen test_analysis \
         run tokens parse codegen emit analyze souffle clean
