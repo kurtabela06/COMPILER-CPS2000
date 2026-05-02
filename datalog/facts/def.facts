@@ -1,4 +1,2 @@
-bb0	zero
-bb0	d
-bb0	is_neg
-bb1	r
+bb0	fp
+bb0	v
